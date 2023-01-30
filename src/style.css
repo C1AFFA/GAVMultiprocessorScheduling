@@ -13,6 +13,8 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+  background-color: #444;
+  color: #c1affa;
 }
 
 a {
@@ -77,6 +79,8 @@ button:focus-visible {
   padding: 2rem;
   text-align: center;
   height: 100vh;
+  background-color: #444;
+  color: #c1affa;
 }
 
 @media (prefers-color-scheme: light) {
