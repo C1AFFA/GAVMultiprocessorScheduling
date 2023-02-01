@@ -19,6 +19,8 @@ GA.eventListener.on('status-updated',(status)=>{
   commaJobs.value = status.jobDurations.join()
   algoStep.value = status.algoStep
   isRunning.value = status.running
+  if(status.children && status.children.length > 0)
+    children.value = status.children
 
   if(status.population.length > 0 && !worstFitness)
     worstFitness =  status.population[(status.population.length-1)].fit
@@ -56,6 +58,7 @@ const selectionSplit = ref(0.5)
 const commaJobs = ref("")
 const algoStep = ref()
 const isRunning = ref()
+const children = ref()
 
 const setMachines = () => {
   GA.setMachinesNumber(machinesNumber.value)
@@ -172,45 +175,72 @@ const isMemberSelected = (memberIndex)=>{
 <template>
   
   <div class="card">
-    <div class="panel-step-1">     
-      <div class="flex">
-        <div class="mr">
-          <p class="label"> Jobs quantity:</p>
-          <input type="number" class ="input-ga" @input="setJobsNumber" v-model="jobsNumber" placeholder="job number" :disabled="isRunning"  min="0" max="1000">
-          <!-- <span>{{jobs}}</span> -->
-        </div>
-        <div v-if="jobsNumber > 0">
-          <p class="label"> Comma separated jobs durations:</p>
-          <div>
-            <input type="text" style="width:400px" class ="input-ga"  :class="{ invalid: !durationValidity }" @input="setJobsDuration" v-model="commaJobs" placeholder="comma separated jobs duration" :disabled="isRunning">
-          </div>
-        </div>
-      </div> 
+    <div class="panel-step-1"> 
       <div class="flex justify">
         <div>
-          <p class="label"> Machines quantity:</p>
-          <input type="number" class ="input-ga" @input="setMachines" v-model="machinesNumber" placeholder="machines number">
+          <div class="title">
+            Problem parameters
+          </div>    
+            <div class="flex">
+              <div class="mr">
+                  <p class="label"> Machines:</p>
+                  <input type="number" style="width:100px" class ="input-ga" @input="setMachines" v-model="machinesNumber" placeholder="machines number">
+              </div>
+              <div class="mr">
+                <p class="label"> Jobs:</p>
+                <input type="number" style="width:100px" class ="input-ga" @input="setJobsNumber" v-model="jobsNumber" placeholder="job number" :disabled="isRunning"  min="0" max="1000">
+                <!-- <span>{{jobs}}</span> -->
+              </div>
+              <div v-if="jobsNumber > 0">
+                <p class="label"> Durations:</p>
+                <div>
+                  <input type="text" style="width:100px" class ="input-ga"  :class="{ invalid: !durationValidity }" @input="setJobsDuration" v-model="commaJobs" placeholder="comma separated jobs duration" :disabled="isRunning">
+                </div>
+              </div>
+            </div> 
         </div>
         <div>
-          <p class="label"> Generations number:</p>
-          <input type="number" class ="input-ga" @input="setGenerations" v-model="generationNumber" placeholder="generation number" :disabled="isRunning">
+          <div class="title">
+            Algorithm parameters
+          </div>   
+          <div >
+            <div class="flex justify">
+                <div class="mr">
+                  <p class="label"> Generations:</p>
+                  <input type="number" style="width:100px" class ="input-ga" @input="setGenerations" v-model="generationNumber" placeholder="generation number" :disabled="isRunning">
+                </div>
+                <div class="mr">
+                  <p class="label"> Population:</p>
+                  <input type="number" style="width:100px" class ="input-ga" @input="setPopulation" v-model="popSize" placeholder="population size" :disabled="disablePopulation">
+                </div>
+
+                <div class="mr">
+                  <p class="label"> Mutation rate: {{ mutationRate }}</p>
+                  <input type="range" @input="setMutationRate" v-model="mutationRate"  min="0" max="1" step="0.01">
+                </div>
+                <div class="mr">
+                  <p class="label selectedmember"> Selection split: {{ selectionSplit }}</p>
+                  <input type="range" @input="setSelectionSplit" v-model="selectionSplit"  min="0" max="1" step="0.01">
+                </div>
+            </div>
+          </div>
         </div>
-        <div>
-          <p class="label"> Population size:</p>
-          <input type="number" class ="input-ga" @input="setPopulation" v-model="popSize" placeholder="population size" :disabled="disablePopulation">
-        </div>
-        <div>
-          <p class="label"> Mutation rate: {{ mutationRate }}</p>
-          <input type="range" @input="setMutationRate" v-model="mutationRate"  min="0" max="1" step="0.01">
-        </div>
-        <div>
-          <p class="label selectedmember"> Selection split: {{ selectionSplit }}</p>
-          <input type="range" @input="setSelectionSplit" v-model="selectionSplit"  min="0" max="1" step="0.01">
-        </div>    
       </div>
+      
+
     </div>
     <div class="flex justify">
-      <div>
+
+    </div>
+
+
+    <div class="details flex justify title">
+     <!--  <span>GA phase: {{ algoStep }}</span> -->
+     <div class="flex justify results">
+       <span>Current iteration: {{ currentGeneration }}</span>
+       <span class="fitness">Best fitness score: {{ bestFitness }}</span>
+     </div>
+     <div class="pulsantiera">
         <button class="btn-cmnd" type="button" @click="run" :disabled="runDisabled" >run</button>
         <button class="btn-cmnd" type="button" @click="stop" :disabled="stopDisabled">stop</button>
         <button class="btn-cmnd" type="button" @click="reset" :disabled="resetDisabled">reset</button>
@@ -219,17 +249,13 @@ const isMemberSelected = (memberIndex)=>{
         <button class="btn-cmnd" type="button" @click="test">test problem</button>
       </div>
     </div>
-
-
-    <div class="details flex">
-      <span>GA phase: {{ algoStep }}</span>
-      <span>Current iteration: {{ currentGeneration }}</span>
-      <span class="fitness">Best fitness score: {{ bestFitness }}</span>
-    </div>
     <div class="displaypop">
       <div class="labels">
         <p v-for="(item, index) in population" :key="index"  :class="{selectedmember: isMemberSelected(index)}">
-           {{ item.genes }}
+          
+           <span class="mr" v-if="item.age">({{ item.age }})</span>
+           <span class="mr child" v-else>0</span>
+           <span class="genes">{{ item.genes }}</span>
         </p>  
       </div>
       <canvas id="population-display" ref="canvas" width="500">
@@ -240,6 +266,30 @@ const isMemberSelected = (memberIndex)=>{
         </p>  
       </div>
     </div>
+    <div v-if="isRunning" style="width:500px">
+      <div class="flex align-middle justify title">
+        <div>parents</div>
+        <div>children</div>
+      </div>
+      <div v-for="(item, index) in children">
+          <div class="flex align-middle justify">
+
+            <div class="va selectedmember mr">
+              <p v-for="(parent, index) in item.parents">
+                {{parent.genes}}
+              </p>
+            </div>
+            <div class="va child">
+              <p>
+                {{ item.genes }} : {{ item.fit }}
+              </p>
+            </div>
+          </div>
+          <hr>
+        </div>  
+    </div>
+
+
   </div>
 </template>
 
@@ -294,6 +344,7 @@ const isMemberSelected = (memberIndex)=>{
 }
 .flex{
   display: flex;
+  flex-wrap: wrap;
 }
 .details.flex span{
   text-align: center;
@@ -316,5 +367,50 @@ input.invalid{
 
 input{
   border-radius: 5px;
+  padding: 5px;
+}
+
+.va{
+  vertical-align: middle;
+}
+.va p{
+  margin: 0;
+  font-size: 10px;
+}
+.align-middle{
+  align-items:center;
+}
+
+.child{
+  color:aqua;
+}
+
+.title{
+  background-color: #393939;
+  margin: 15px 0px;
+  padding: 5px 10px;
+  color:#aaa;
+}
+
+input[type=range] {
+    -webkit-appearance: none;
+    background-color: silver;
+    width: 200px;
+    height:20px;
+    padding: 3px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+     -webkit-appearance: none;
+    background-color: #666;
+    opacity: 0.5;
+    width: 10px;
+    height: 26px;
+}
+.results{
+  flex-grow: 4;
+}
+button{
+  padding:4px;
 }
 </style>

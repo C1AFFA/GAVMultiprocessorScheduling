@@ -37,7 +37,6 @@ a:hover {
 
 body {
   margin: 0;
-  display: flex;
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
@@ -69,18 +68,16 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
-.card {
-  padding: 2em;
-}
+
 
 #app {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1rem;
   text-align: center;
-  height: 100vh;
   background-color: #444;
   color: #c1affa;
+  font-family:monospace;
 }
 
 @media (prefers-color-scheme: light) {

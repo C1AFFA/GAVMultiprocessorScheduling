@@ -92,6 +92,7 @@ export const GeneticAlgorithm = () => {
             for(let i=0; i<jobsNumber;i+=1){
                 jobDurations.push(Math.round(Math.random()*20 + 1))
             }
+            if(population.length>0) initializeRandomPopulation(population.length)
             statusUpdated()
         }
     }
@@ -104,13 +105,17 @@ export const GeneticAlgorithm = () => {
                 jobDurations.push(parsedDuration)
             }
             jobsNumber = jd.length
+            if(population.length>0) initializeRandomPopulation(population.length)
             statusUpdated()
         }
     }
 
     const setMachinesNumber = (mn) =>{
-        if(mn) machinesNumber = mn
-        statusUpdated()
+        if(mn){
+            machinesNumber = mn
+            if(population.length>0) initializeRandomPopulation(population.length)
+            statusUpdated()
+        } 
     }
     const setMutationRate = (mr) =>{
         const parsedMR = parseFloat(mr)
@@ -206,7 +211,7 @@ export const GeneticAlgorithm = () => {
         }       
     }
     const reproduction = ()=>{
-        while(matingPool.length > 2){
+        while(matingPool.length >= 2){
             const p1 = matingPool.splice(Math.floor(Math.random()*matingPool.length), 1)[0];
             const p2 = matingPool.splice(Math.floor(Math.random()*matingPool.length), 1)[0];
             const childGenes = []
@@ -228,7 +233,9 @@ export const GeneticAlgorithm = () => {
             
             const child = {
                 genes: childGenes,
-                fit: calculateFitness(childGenes)
+                fit: calculateFitness(childGenes),
+                parents:[p1,p2],
+                status:"child"
             }
     
             children.push(child)
@@ -238,6 +245,12 @@ export const GeneticAlgorithm = () => {
     const discard = ()=>{
         algoStep = "discard"
         statusUpdated()
+        population = population.map((member)=>{
+            member.status = 'survived'
+            if(!member.age) member.age = 0
+            member.age += 1
+            return member
+        })
         population = population.concat(children)
         orderByFitness()
         population = population.slice(0, populationSize);
