@@ -113,7 +113,7 @@ export const GeneticAlgorithm = () => {
     const setMachinesNumber = (mn) =>{
         if(mn){
             machinesNumber = mn
-            if(population.length>0) initializeRandomPopulation(population.length)
+            //if(population.length>0) initializeRandomPopulation(population.length)
             statusUpdated()
         } 
     }

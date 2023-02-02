@@ -16,12 +16,12 @@ import GA from './components/GA.vue'
 <style scoped>
 .title{
   background-color: #393939;
-  margin: 15px 0px;
+  margin: 0px 0px 8px 0px;
   padding: 5px 10px;
   color:#aaa;
 }
 #description{
-  font-size:0.9em;
+  font-size:0.8em;
 }
 #description p{
   margin: 3px;

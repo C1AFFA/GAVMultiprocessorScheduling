@@ -10,7 +10,10 @@
   },
   "dependencies": {
     "eventemitter3": "^5.0.0",
-    "vue": "^3.2.45"
+    "v-drag": "^3.0.8",
+    "vue": "^3.2.45",
+    "vue-dialog-drag": "^0.1.29",
+    "vuedraggable": "^2.24.3"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.0.0",

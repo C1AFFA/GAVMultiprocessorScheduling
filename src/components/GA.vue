@@ -1,8 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { GeneticAlgorithm } from '../utils/genetic-algorithm';
-
-
 const canvas = ref()
 let display
 
@@ -35,8 +33,18 @@ GA.eventListener.on('status-updated',(status)=>{
     
     display.fillRect(0, setY, fit, 18);
   }
-  
-
+  if(population.value.length > 0){
+    let best = population.value[0].genes
+    const machineJobs = new Array(machinesNumber.value).fill(0);
+    for(let g in best){        
+      machineJobs[best[g]] += jobs.value[g]
+    }
+    bestSolution.value = { 
+      genes: best,
+      fit: population.value[0].fit,
+      gant: machineJobs
+    }
+  }
 
 })
 .on("error",(err)=>{
@@ -59,6 +67,7 @@ const commaJobs = ref("")
 const algoStep = ref()
 const isRunning = ref()
 const children = ref()
+const bestSolution = ref()
 
 const setMachines = () => {
   GA.setMachinesNumber(machinesNumber.value)
@@ -170,10 +179,13 @@ const isMemberSelected = (memberIndex)=>{
   return memberIndex < popSize.value*selectionSplit.value
 }
 
+const getWorkloadRatio = (index)=>{
+  return  100*bestSolution.value.gant[index]/bestSolution.value.fit 
+}
+
 </script>
 
 <template>
-  
   <div class="card">
     <div class="panel-step-1"> 
       <div class="flex justify">
@@ -229,11 +241,6 @@ const isMemberSelected = (memberIndex)=>{
       
 
     </div>
-    <div class="flex justify">
-
-    </div>
-
-
     <div class="details flex justify title">
      <!--  <span>GA phase: {{ algoStep }}</span> -->
      <div class="flex justify results">
@@ -249,7 +256,7 @@ const isMemberSelected = (memberIndex)=>{
         <button class="btn-cmnd" type="button" @click="test">test problem</button>
       </div>
     </div>
-    <div class="displaypop">
+    <div v-drag class="displaypop">
       <div class="labels">
         <p v-for="(item, index) in population" :key="index"  :class="{selectedmember: isMemberSelected(index)}">
           
@@ -266,12 +273,13 @@ const isMemberSelected = (memberIndex)=>{
         </p>  
       </div>
     </div>
-    <div v-if="isRunning" style="width:500px">
+    <div class="reproduction-panel" v-drag v-if="isRunning" style="width:500px">
       <div class="flex align-middle justify title">
         <div>parents</div>
         <div>children</div>
       </div>
-      <div v-for="(item, index) in children">
+      <div class="families">
+        <div class="family" v-for="(item, index) in children">
           <div class="flex align-middle justify">
 
             <div class="va selectedmember mr">
@@ -285,8 +293,21 @@ const isMemberSelected = (memberIndex)=>{
               </p>
             </div>
           </div>
-          <hr>
         </div>  
+      </div>
+    </div>
+
+    <div class="best-solution-panel" v-drag v-if="isRunning" style="width:500px">
+      <div class="title">
+        Best solution: {{ bestSolution.genes }}
+      </div>
+      <div class="solution">
+        <div class="workload" v-for="(workload, index) in bestSolution.gant" :key="index" :style="{ textAlign:'left', color:'#ddd', background: 'linear-gradient(90deg, #c1affa '+getWorkloadRatio(index)+'%, #444 '+(100-getWorkloadRatio(index))+'%)' }">
+          <span claa="title">
+            {{ index }}:{{ workload }}
+          </span>
+        </div>
+      </div>
     </div>
 
 
@@ -294,6 +315,32 @@ const isMemberSelected = (memberIndex)=>{
 </template>
 
 <style scoped>
+
+.workload{
+  margin: 10px;
+}
+.genes{
+  max-width: 500px;
+  overflow: clip;
+  height: 28px;
+  display: inline-block;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.family{
+  padding:0px 10px;
+  border-bottom: solid grey 1px;
+}
+.families{
+  padding: 8px;
+  padding-top: 0px;
+
+}
+.reproduction-panel{
+  background-color: #444;
+  border-radius: 5px;
+  border: solid grey 1px;
+}
 .read-the-docs {
   color: #888;
 }
@@ -309,11 +356,15 @@ const isMemberSelected = (memberIndex)=>{
   height: 20px;
   margin:0;
 }
+.label{
+  font-size: 0.75em;
+}
 .displaypop{
   display: flex;
   justify-content:center;
   margin-top: 10px;
   min-width: 600px;
+  background-color: #444;
 }
 
 .label{
@@ -323,7 +374,7 @@ const isMemberSelected = (memberIndex)=>{
 }
 .panel-step-1{
   text-align: left;
-  margin: 15px 0px;
+  margin: 5px 0px;
   min-width: 1000px;
 }
 
@@ -387,7 +438,7 @@ input{
 
 .title{
   background-color: #393939;
-  margin: 15px 0px;
+  margin: 5px 0px 5px 0px;
   padding: 5px 10px;
   color:#aaa;
 }
